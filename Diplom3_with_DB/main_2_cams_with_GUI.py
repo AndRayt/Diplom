@@ -144,10 +144,6 @@ class FrameProc:
                 rects2.append((startX, startY, endX, endY))
         """
 
-        # Линия относительно которой считается что люди идут вверх или вниз
-        cv2.line(frame1, (self.line_1[0], self.line_1[1]), (self.line_1[2], self.line_1[3]), (0, 0, 255))
-        cv2.line(frame2, (self.line_2[0], self.line_2[1]), (self.line_2[2], self.line_2[3]), (0, 0, 255))
-
         # связываем старые центроиды с новыми вычисленными
         objects1, objects2 = self.linking_tracker.update(rects1, frame1, rects2, frame2)
         if TEST_MODE: print("obj1:", objects1, "obj2", objects2)
@@ -182,9 +178,9 @@ class FrameProc:
                         print("_________________")
                         if direction > 0:
                             print("dir TRUE")
-                        if centroid[1] < self.door_points[1][1]:
+                        if centroid[1] < np.mean([self.line_1[1], self.line_1[3]]):
                             print("2 TRUE")
-                        if centroid[1] > self.door_points[0][1]:
+                        if centroid[1] > np.mean([self.line_1[1], self.line_1[3]]):
                             print("3 TRUE")
                     if direction < 0 and centroid[1] < np.mean([self.line_1[1], self.line_1[3]]):
                         to.enter = True
@@ -192,7 +188,7 @@ class FrameProc:
                         # чтобы в след. раз это не влияло на вычисление среднего
                         if len(to.centroids2) > 0:
                             to.centroid2 = [to.centroids2[-1]]
-                        if len(to.centroids2) > 0:
+                        if len(to.centroids1) > 0:
                             to.centroids1 = [to.centroids1[-1]]
                         self.totalPeopleCount += 1
                         self.db.set_is_in_building(str(to.id), str(1))
@@ -204,7 +200,7 @@ class FrameProc:
                         # чтобы в след. раз это не влияло на вычисление среднего
                         if len(to.centroids2) > 0:
                             to.centroid2 = [to.centroids2[-1]]
-                        if len(to.centroids2) > 0:
+                        if len(to.centroids1) > 0:
                             to.centroids1 = [to.centroids1[-1]]
                         self.totalPeopleCount -= 1
                         self.db.set_is_in_building(str(to.id), str(0))
@@ -234,7 +230,7 @@ class FrameProc:
                 y = [c[1] for c in to.centroids2]
                 direction = centroid[1] - np.mean(y)
                 # добавляем новую центройду
-                to.centroids1.append(centroid)
+                to.centroids2.append(centroid)
                 if TEST_MODE:
                     if direction > 0:
                         print("вниз на 2 камере")
@@ -247,9 +243,9 @@ class FrameProc:
                         print("_________________")
                         if direction > 0:
                             print("dir TRUE")
-                        if centroid[1] < self.door_points[1][1]:
+                        if centroid[1] < np.mean([self.line_2[1], self.line_2[3]]):
                             print("2 TRUE")
-                        if centroid[1] > self.door_points[0][1]:
+                        if centroid[1] > np.mean([self.line_2[1], self.line_2[3]]):
                             print("3 TRUE")
                     if direction > 0 and centroid[1] > np.mean([self.line_2[1], self.line_2[3]]):
                         to.enter = True
@@ -257,7 +253,7 @@ class FrameProc:
                         # чтобы в след. раз это не влияло на вычисление среднего
                         if len(to.centroids2) > 0:
                             to.centroid2 = [to.centroids2[-1]]
-                        if len(to.centroids2) > 0:
+                        if len(to.centroids1) > 0:
                             to.centroids1 = [to.centroids1[-1]]
                         self.totalPeopleCount += 1
                         self.db.set_is_in_building(str(to.id), str(1))
@@ -269,7 +265,7 @@ class FrameProc:
                         # чтобы в след. раз это не влияло на вычисление среднего
                         if len(to.centroids2) > 0:
                             to.centroid2 = [to.centroids2[-1]]
-                        if len(to.centroids2) > 0:
+                        if len(to.centroids1) > 0:
                             to.centroids1 = [to.centroids1[-1]]
                         self.totalPeopleCount -= 1
                         self.db.set_is_in_building(str(to.id), str(0))
@@ -281,6 +277,10 @@ class FrameProc:
             cv2.putText(frame2, text, (centroid[0] - 10, centroid[1] - 10),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
             cv2.circle(frame2, (centroid[0], centroid[1]), 4, (0, 255, 0), -1)
+
+        # Линия относительно которой считается что люди идут вверх или вниз
+        cv2.line(frame1, (self.line_1[0], self.line_1[1]), (self.line_1[2], self.line_1[3]), (0, 0, 255))
+        cv2.line(frame2, (self.line_2[0], self.line_2[1]), (self.line_2[2], self.line_2[3]), (0, 0, 255))
 
         # Проходимся по этому массиву и рисуем информацию на кадре
         text = "{}: {}".format("Inside", self.totalPeopleCount)

@@ -1,5 +1,11 @@
 import imutils
 import cv2
+import dlib
+from imutils import face_utils
+import numpy as np
+from scipy import ndimage
+
+from detector.haar_cascades_detection import HaarCascadesDetection
 
 TEST_ON = False
 
@@ -16,6 +22,34 @@ def frame_preprocessing(frame, resize_x=400, resize_y=400, gray=True):
     # Фильтр гаусса для удаления шумов
     frame = cv2.GaussianBlur(frame, (5, 5), 0)
     return frame
+
+"""
+    Метод выравнивает лицо по линии глаз
+"""
+def alignment_face(img_face):
+    def alignment(img, face_box):
+        predictor_path = "C:\\Users\\Andrew\\PycharmProjects\\Diplom2\\shape_predictor_5_face_landmarks.dat"
+        predictor = dlib.shape_predictor(predictor_path)
+        points = predictor(img, face_box)
+        points = face_utils.shape_to_np(points)
+        return points
+
+    rectangle = dlib.rectangle(0, 0, img_face.shape[1], img_face.shape[0])
+    points = alignment(img_face, rectangle)
+    # Выравнивание фотографии по линии глаз
+    right_eye = [(points[0][0] + points[1][0]) / 2,
+                 (points[0][1] + points[1][1]) / 2]  # крайняя правая точка правого глаза плюс крайняя левая по полам
+    left_eye = [(points[2][0] + points[3][0]) / 2,
+                (points[2][1] + points[3][1]) / 2]  # крайняя левая точка левого глаза плюс крайняя права по полам
+    # Угол между глаз - тангес отношение Y / X
+    y = right_eye[1] - left_eye[1]
+    x = right_eye[0] - left_eye[0]
+    ang = np.degrees(np.arctan2(y, x))
+    # Поворачиваем изображение
+    rotated_image = ndimage.rotate(img_face, ang)
+    #cv2.imshow("face", rotated_image)
+    #cv2.waitKey()
+    return rotated_image
 
 """
     Вычитание фона
@@ -73,11 +107,21 @@ class BackgroundSubtraction:
 
 # TEST_MODULE
 if __name__ == '__main__':
-    CAMERA = 0
-    vs = cv2.VideoCapture(CAMERA)
-    ret_first, frame_first = vs.read()
-    bs = BackgroundSubtraction(frame_first)
-    while True:
-        ret, frame = vs.read()
-        result = bs.get_motion_box(frame)
-        print(result)
+    #CAMERA = 0
+    #vs = cv2.VideoCapture(CAMERA)
+    #ret_first, frame_first = vs.read()
+    #bs = BackgroundSubtraction(frame_first)
+    #while True:
+    #    ret, frame = vs.read()
+    #    result = bs.get_motion_box(frame)
+    #    print(result)
+    image_path = "C:\\Users\\Andrew\\PycharmProjects\\Diplom2\\jenna_al.jpg"
+    detector = HaarCascadesDetection()
+    img = cv2.imread(image_path)
+    boxes = detector.human_detection(img)
+    box = boxes[0]
+    rectangle = dlib.rectangle(box[0], box[1], box[2], box[3])
+    img = img[box[1]:box[3], box[0]:box[2]]
+    al_face = alignment_face(img)
+    cv2.imshow("sd", al_face)
+    cv2.waitKey()

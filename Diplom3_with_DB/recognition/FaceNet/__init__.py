@@ -3,7 +3,7 @@ import cv2
 import pickle
 import numpy as np
 from collections import OrderedDict
-
+from preprocessing import alignment_face
 TEST_MODE = False
 
 class FaceNetRecognition:
@@ -33,7 +33,8 @@ class FaceNetRecognition:
         (startX, startY, endX, endY) = face_box
         # получаем ROI лица
         face = frame[startY:endY, startX:endX]
-
+        # выравниваем лицо по линии глаз
+        face = alignment_face(face)
         # создаем блоб и подаек его на классификатор
         faceBlob = cv2.dnn.blobFromImage(face, 1.0 / 255,
                                          (96, 96), (0, 0, 0), swapRB=True, crop=False)

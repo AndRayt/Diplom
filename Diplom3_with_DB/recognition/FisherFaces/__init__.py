@@ -7,7 +7,7 @@ import pickle
 from detector.haar_cascades_detection import *
 from entity.employee import *
 from database import DataBase
-from preprocessing import frame_preprocessing
+from preprocessing import frame_preprocessing, alignment_face
 
 TEST_MODE = False
 
@@ -87,6 +87,8 @@ class FisherFacesRecognition:
         (startX, startY, endX, endY) = face_box
         # получаем ROI лица
         face = frame[startY:endY, startX:endX]
+        # выравниваем лицо по линии глаз
+        face = alignment_face(face)
         if not(len(face) == 0):
             self.recog.read(face_recog_path)
             face = cv2.resize(face, (self.x_face_size, self.y_face_size))
