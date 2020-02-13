@@ -111,38 +111,6 @@ class FrameProc:
             trackers2.append(tracker)
             # добавляем эту информацию в массив прямоугольников
             rects2.append((startX, startY, endX, endY))
-        # Не анализируя людей в кадре анализируем их перемещение с помощью трекера
-        """"
-        else:
-            # проходим через все трекеры
-            for tracker in self.trackers1:
-                # обновляем статус на отслеживание
-                status = "Tracking"
-                # получаем позицию объекта
-                tracker.update(gray_frame1)
-                pos = tracker.get_position()
-                # получаем координаты позиции
-                startX = int(pos.left())
-                startY = int(pos.top())
-                endX = int(pos.right())
-                endY = int(pos.bottom())
-                # добавляем эту информацию в массив прямоугольников
-                rects1.append((startX, startY, endX, endY))
-
-            for tracker in self.trackers2:
-                # обновляем статус на отслеживание
-                status = "Tracking"
-                # получаем позицию объекта
-                tracker.update(gray_frame2)
-                pos = tracker.get_position()
-                # получаем координаты позиции
-                startX = int(pos.left())
-                startY = int(pos.top())
-                endX = int(pos.right())
-                endY = int(pos.bottom())
-                # добавляем эту информацию в массив прямоугольников
-                rects2.append((startX, startY, endX, endY))
-        """
 
         # связываем старые центроиды с новыми вычисленными
         objects1, objects2 = self.linking_tracker.update(rects1, frame1, rects2, frame2)
